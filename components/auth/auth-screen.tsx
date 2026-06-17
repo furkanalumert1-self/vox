@@ -20,11 +20,42 @@ export function AuthScreen({ mode }: { mode: "login" | "signup" }) {
   const { ui, t, lang } = useLang();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  function enter(e?: React.FormEvent) {
+  async function enter(e?: React.FormEvent) {
     e?.preventDefault();
     setLoading(true);
-    setTimeout(() => router.push("/dashboard"), 450);
+    setError(null);
+
+    const form = (e?.target as HTMLFormElement | undefined);
+    const email = (form?.querySelector("#email") as HTMLInputElement)?.value;
+    const password = (form?.querySelector("#password") as HTMLInputElement)?.value;
+
+    if (email && password && email !== "demo@demo.app") {
+      try {
+        const endpoint = isLogin ? "/api/auth/login" : "/api/auth/signup";
+        const res = await fetch(endpoint, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password }),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          setError(data.error ?? "An error occurred");
+          setLoading(false);
+          return;
+        }
+      } catch {
+        // fallthrough to demo
+      }
+    }
+
+    setTimeout(() => router.push("/dashboard"), 300);
+  }
+
+  function demoEnter() {
+    setLoading(true);
+    setTimeout(() => router.push("/dashboard"), 300);
   }
 
   const isLogin = mode === "login";
@@ -90,10 +121,10 @@ export function AuthScreen({ mode }: { mode: "login" | "signup" }) {
 
           {/* Social (decorative in demo) */}
           <div className="grid grid-cols-2 gap-3">
-            <Button variant="outline" onClick={enter} className="gap-2">
+            <Button variant="outline" onClick={demoEnter} className="gap-2">
               <GoogleGlyph /> Google
             </Button>
-            <Button variant="outline" onClick={enter} className="gap-2">
+            <Button variant="outline" onClick={demoEnter} className="gap-2">
               <GithubGlyph /> GitHub
             </Button>
           </div>
@@ -126,8 +157,14 @@ export function AuthScreen({ mode }: { mode: "login" | "signup" }) {
             </Button>
           </form>
 
+          {error && (
+            <p className="rounded-lg bg-destructive/10 border border-destructive/30 px-3 py-2 text-center text-xs text-destructive">
+              {error}
+            </p>
+          )}
+
           <button
-            onClick={enter}
+            onClick={demoEnter}
             className="w-full rounded-lg border border-dashed border-border py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:border-primary hover:text-primary cursor-pointer"
           >
             {ui.continueDemo} →

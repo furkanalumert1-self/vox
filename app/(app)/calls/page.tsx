@@ -5,15 +5,15 @@ import { Icon } from "@/components/ui/icon";
 import { Waveform } from "@/components/app/waveform";
 import { useLang } from "@/components/i18n/language-provider";
 import {
-  CALLS,
   AGENTS,
-  outcomes,
+  outcomes as demoOutcomes,
   OUTCOME_LABEL,
   OUTCOME_TINT,
   SENTIMENT_LABEL,
   type CallRow,
   type Outcome,
 } from "@/lib/demo/data";
+import { useLiveCalls } from "@/lib/hooks/use-live-data";
 import { cn } from "@/lib/utils";
 
 const SENTIMENT_TINT: Record<string, string> = {
@@ -28,6 +28,8 @@ export default function CallsPage() {
   const { lang, t } = useLang();
   const [filter, setFilter] = useState<Outcome | "all">("all");
   const [query, setQuery] = useState("");
+  const { calls: CALLS } = useLiveCalls();
+  const outcomes = demoOutcomes;
   const [openCall, setOpenCall] = useState<CallRow | null>(null);
 
   const agentName = (id: string) => AGENTS.find((a) => a.id === id)?.name ?? "—";

@@ -6,16 +6,10 @@ import { Waveform } from "@/components/app/waveform";
 import { AreaChart, Donut } from "@/components/app/charts";
 import { useLang } from "@/components/i18n/language-provider";
 import {
-  kpis,
-  CALLS,
   LIVE_CALLS,
-  AGENTS,
   VOICES,
   BUILDER_ACTIONS,
-  outcomes,
-  callVolume,
   volumeMeta,
-  minutes,
   OUTCOME_LABEL,
   OUTCOME_TINT,
   SENTIMENT_LABEL,
@@ -23,6 +17,7 @@ import {
   type Outcome,
   type Agent,
 } from "@/lib/demo/data";
+import { useLiveCalls, useLiveAgents, useLiveStats } from "@/lib/hooks/use-live-data";
 import { cn } from "@/lib/utils";
 
 const SENTIMENT_TINT: Record<string, string> = {
@@ -36,6 +31,9 @@ export default function DashboardPage() {
   const [agentFilter, setAgentFilter] = useState<string>("all");
   const [openCall, setOpenCall] = useState<CallRow | null>(null);
   const [livePlaying, setLivePlaying] = useState(true);
+  const { calls: CALLS, source: callsSource } = useLiveCalls();
+  const { agents: AGENTS } = useLiveAgents();
+  const { kpis, callVolume, outcomes, minutes } = useLiveStats();
 
   const L = {
     cockpit: lang === "tr" ? "Sesli ajan kokpiti" : "Voice agent cockpit",
@@ -60,7 +58,7 @@ export default function DashboardPage() {
   const rows = useMemo(() => {
     if (agentFilter === "all") return CALLS;
     return CALLS.filter((c) => c.agentId === agentFilter);
-  }, [agentFilter]);
+  }, [agentFilter, CALLS]);
 
   const donutSegments = outcomes.map((o) => ({ key: o.key, value: o.value, tint: OUTCOME_TINT[o.key] }));
   const totalCalls = outcomes.reduce((s, o) => s + o.value, 0);
@@ -81,7 +79,7 @@ export default function DashboardPage() {
               </span>
             </div>
             <div className="ml-auto">
-              <AgentFilter value={agentFilter} onChange={setAgentFilter} allLabel={L.all} />
+              <AgentFilter value={agentFilter} onChange={setAgentFilter} allLabel={L.all} agents={AGENTS} />
             </div>
           </div>
 
@@ -246,7 +244,7 @@ export default function DashboardPage() {
           </section>
 
           {/* Voice agents list */}
-          <AgentsPanel lang={lang} t={t} title={L.agents} callsTodayLabel={L.callsToday} />
+          <AgentsPanel lang={lang} t={t} title={L.agents} callsTodayLabel={L.callsToday} agents={AGENTS} />
 
           {/* Agent-builder preview */}
           <AgentBuilder lang={lang} t={t} title={L.builder} />
@@ -279,11 +277,11 @@ function OutcomePill({ outcome, lang }: { outcome: Outcome; lang: "tr" | "en" })
   );
 }
 
-function AgentFilter({ value, onChange, allLabel }: { value: string; onChange: (v: string) => void; allLabel: string }) {
+function AgentFilter({ value, onChange, allLabel, agents }: { value: string; onChange: (v: string) => void; allLabel: string; agents: Agent[] }) {
   return (
     <div className="inline-flex items-center gap-0.5 rounded-md border border-border bg-card p-0.5">
       <FilterBtn active={value === "all"} onClick={() => onChange("all")} label={allLabel} />
-      {AGENTS.filter((a) => a.active).map((a) => (
+      {agents.filter((a) => a.active).map((a) => (
         <FilterBtn key={a.id} active={value === a.id} onClick={() => onChange(a.id)} label={a.name} />
       ))}
     </div>
@@ -305,8 +303,8 @@ function FilterBtn({ active, onClick, label }: { active: boolean; onClick: () =>
   );
 }
 
-function AgentsPanel({ lang, t, title, callsTodayLabel }: { lang: "tr" | "en"; t: (v: { tr: string; en: string }) => string; title: string; callsTodayLabel: string }) {
-  const [agents, setAgents] = useState<Agent[]>(AGENTS);
+function AgentsPanel({ lang, t, title, callsTodayLabel, agents: agentsProp }: { lang: "tr" | "en"; t: (v: { tr: string; en: string }) => string; title: string; callsTodayLabel: string; agents: Agent[] }) {
+  const [agents, setAgents] = useState<Agent[]>(agentsProp);
   return (
     <section className="rounded-lg border border-border bg-card/30">
       <header className="flex items-center justify-between border-b border-border px-3 py-2">

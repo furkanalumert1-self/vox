@@ -4,16 +4,18 @@ import { useState } from "react";
 import { Icon } from "@/components/ui/icon";
 import { Waveform } from "@/components/app/waveform";
 import { useLang } from "@/components/i18n/language-provider";
-import { AGENTS, VOICES, BUILDER_ACTIONS, type Agent } from "@/lib/demo/data";
+import { AGENTS as DEMO_AGENTS, VOICES, BUILDER_ACTIONS, type Agent } from "@/lib/demo/data";
+import { useLiveAgents } from "@/lib/hooks/use-live-data";
 import { cn } from "@/lib/utils";
 
 export default function AgentsPage() {
   const { lang, t } = useLang();
-  const [agents, setAgents] = useState<Agent[]>(AGENTS);
-  const [selectedId, setSelectedId] = useState<string>(AGENTS[0].id);
-  const [voice, setVoice] = useState<string>(AGENTS[0].voice);
+  const { agents, saveAgent } = useLiveAgents();
+  const [selectedId, setSelectedId] = useState<string>(DEMO_AGENTS[0].id);
+  const [voice, setVoice] = useState<string>(DEMO_AGENTS[0].voice);
   const [actions, setActions] = useState(BUILDER_ACTIONS);
   const [previewPlaying, setPreviewPlaying] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   const selected = agents.find((a) => a.id === selectedId) ?? agents[0];
 
@@ -83,7 +85,7 @@ export default function AgentsPage() {
                 <span
                   role="switch"
                   aria-checked={a.active}
-                  onClick={(e) => { e.stopPropagation(); setAgents((list) => list.map((x) => (x.id === a.id ? { ...x, active: !x.active } : x))); }}
+                  onClick={(e) => { e.stopPropagation(); saveAgent(a.id, { is_active: !a.active } as Parameters<typeof saveAgent>[1]); }}
                   className={cn("relative h-4 w-7 cursor-pointer rounded-full transition-colors", a.active ? "bg-violet/40" : "bg-muted")}
                 >
                   <span className={cn("absolute top-0.5 h-3 w-3 rounded-full transition-all", a.active ? "left-[14px] bg-violet" : "left-0.5 bg-foreground/60")} />
@@ -167,9 +169,23 @@ export default function AgentsPage() {
               </ul>
             </div>
 
-            <button className="flex w-full items-center justify-center gap-1.5 rounded-md px-3 py-2 text-[12.5px] font-semibold transition-opacity hover:opacity-90" style={{ background: "var(--color-violet)", color: "var(--color-primary-foreground)" }}>
-              <Icon name="save" className="h-3.5 w-3.5" />
-              {L.save}
+            <button
+              disabled={saving}
+              onClick={async () => {
+                setSaving(true);
+                const greetingEl = document.getElementById("agent-greeting") as HTMLTextAreaElement | null;
+                await saveAgent(selected.id, {
+                  voice,
+                  greeting: (greetingEl?.value ?? (typeof selected.greeting === "string" ? selected.greeting : "")) as never,
+                  active: selected.active,
+                });
+                setSaving(false);
+              }}
+              className="flex w-full items-center justify-center gap-1.5 rounded-md px-3 py-2 text-[12.5px] font-semibold transition-opacity hover:opacity-90 disabled:opacity-50"
+              style={{ background: "var(--color-violet)", color: "var(--color-primary-foreground)" }}
+            >
+              <Icon name={saving ? "loader-circle" : "save"} className={cn("h-3.5 w-3.5", saving && "animate-spin")} />
+              {saving ? (lang === "tr" ? "Kaydediliyor…" : "Saving…") : L.save}
             </button>
           </div>
         </aside>
