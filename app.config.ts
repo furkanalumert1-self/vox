@@ -77,29 +77,29 @@ export interface AppConfig {
 }
 
 export const appConfig: AppConfig = {
-  name: "Vox",
-  tagline: { tr: "İnsan gibi konuşan, hiçbir aramayı kaçırmayan AI telefon ajanları.", en: "AI phone agents that sound human and never miss a call." },
+  name: "Callypso",
+  tagline: { tr: "7/24 çalışan yapay zekâ ses ekibiniz.", en: "Your AI voice team, always on." },
   description: {
-    tr: "Vox, telefonu açan, randevu alan, müşteri adaylarını nitelendiren ve yönlendiren AI sesli telefon ajanlarıdır — 7/24. Bir numara al, ajanını tarif et, gerisini o halletsin. Hepsi tek karanlık bir kokpitte.",
-    en: "Vox is AI voice phone agents that answer calls, book appointments, qualify leads and route them — 24/7. Get a number, describe your agent, and let it handle the rest. All in one dark cockpit.",
+    tr: "Callypso, telefonu açan, randevu alan, müşteri adaylarını nitelendiren ve yönlendiren AI sesli telefon ajanlarıdır — 7/24. Bir numara al, ajanını tarif et, gerisini o halletsin. Hepsi tek karanlık bir kokpitte.",
+    en: "Callypso is AI voice phone agents that answer calls, book appointments, qualify leads and route them — 24/7. Get a number, describe your agent, and let it handle the rest. All in one dark cockpit.",
   },
-  domain: "vox.ai",
-  logoText: "V",
+  domain: "callypsotech.ai",
+  logoText: "C",
   accentName: "violet",
 
   marketing: {
     badge: { tr: "★ 1.200+ ekibin güveniyle", en: "★ Trusted by 1,200+ teams" },
     heroTitle: {
-      tr: "İnsan gibi konuşan AI telefon ajanları,",
-      en: "AI phone agents that sound human,",
+      tr: "7/24 çalışan yapay zekâ ses ekibiniz,",
+      en: "Your AI voice team, always on,",
     },
     heroAccent: {
       tr: "hiçbir aramayı kaçırmaz.",
-      en: "and never miss a call.",
+      en: "and never missing a call.",
     },
     heroSubtitle: {
-      tr: "Vox telefonu ilk çalışta açar, randevu alır, müşteri adaylarını nitelendirir ve doğru kişiye yönlendirir — gece, hafta sonu, yoğunken bile. Bir numara al, ajanını dakikalar içinde kur.",
-      en: "Vox answers on the first ring, books appointments, qualifies leads and routes them to the right person — nights, weekends, even when you're slammed. Get a number and launch your agent in minutes.",
+      tr: "Callypso telefonu ilk çalışta açar, randevu alır, müşteri adaylarını nitelendirir ve doğru kişiye yönlendirir — gece, hafta sonu, yoğunken bile. Bir numara al, ajanını dakikalar içinde kur.",
+      en: "Callypso answers on the first ring, books appointments, qualifies leads and routes them to the right person — nights, weekends, even when you're slammed. Get a number and launch your agent in minutes.",
     },
     heroCtaPrimary: { tr: "Bir numara al", en: "Get a number" },
     heroCtaSecondary: { tr: "Canlı demoyu dinle", en: "Hear the live demo" },
@@ -123,10 +123,10 @@ export const appConfig: AppConfig = {
       { name: "Scale", price: "$399", period: "/mo", tagline: { tr: "Yüksek hacimli operasyonlar için.", en: "For high-volume ops." }, features: [{ tr: "Growth'taki her şey", en: "Everything in Growth" }, { tr: "Sınırsız ajan", en: "Unlimited agents" }, { tr: "Ayda 12.000 dakika", en: "12,000 minutes / month" }, { tr: "Özel ses & ince ayar", en: "Custom voice & fine-tuning" }, { tr: "WebSocket & REST API", en: "WebSocket & REST API" }, { tr: "Özel destek", en: "Dedicated support" }], cta: { tr: "Satışa ulaş", en: "Contact sales" } },
     ],
     faq: [
-      { q: { tr: "Denemek için telefon numarası veya API anahtarı gerekli mi?", en: "Do I need a phone number or API key to try it?" }, a: { tr: "Hayır. Vox gerçekçi arama kayıtları, transkriptler ve canlı bir kokpitle demo modda açılır — hemen tıklayabilirsin. Numara ve sağlayıcı anahtarlarını yalnızca gerçek arama almak için bağlarsın.", en: "No. Vox boots in demo mode with realistic call logs, transcripts and a live cockpit — start clicking immediately. You only connect a number and provider keys when you want to take real calls." } },
+      { q: { tr: "Denemek için telefon numarası veya API anahtarı gerekli mi?", en: "Do I need a phone number or API key to try it?" }, a: { tr: "Hayır. Callypso gerçekçi arama kayıtları, transkriptler ve canlı bir kokpitle demo modda açılır — hemen tıklayabilirsin. Numara ve sağlayıcı anahtarlarını yalnızca gerçek arama almak için bağlarsın.", en: "No. Callypso boots in demo mode with realistic call logs, transcripts and a live cockpit — start clicking immediately. You only connect a number and provider keys when you want to take real calls." } },
       { q: { tr: "Ajan gerçekten insan gibi mi konuşuyor?", en: "Does the agent really sound human?" }, a: { tr: "Evet. Düşük gecikmeli akışlı sesler, doğal duraklamalar ve araya girme (barge-in) desteği var. Arayan ajanın sözünü kesebilir, ajan da uyum sağlar — donuk bir IVR menüsü gibi değil.", en: "Yes. It uses low-latency streaming voices with natural pauses and barge-in support, so callers can interrupt and the agent adapts — nothing like a clunky IVR menu." } },
       { q: { tr: "Randevuyu nasıl alıyor?", en: "How does it book appointments?" }, a: { tr: "Ajan, Google Calendar veya Cal.com takvimine canlı bağlanır, gerçek uygunluğu okur, arayana slot teklif eder ve aramayı kapatmadan rezervasyonu onaylayıp davet gönderir.", en: "The agent connects live to your Google Calendar or Cal.com, reads real availability, offers slots to the caller and confirms the booking — sending the invite before the call ends." } },
-      { q: { tr: "Bir aramayı insana aktarabilir mi?", en: "Can it transfer a call to a human?" }, a: { tr: "Evet. Kuralı sen koyarsın — belirli niyetler, sıcak adaylar veya bir anahtar ifade — Vox aramayı canlı olarak doğru ekibe veya kişiye transfer eder, bağlamı da yanında taşır.", en: "Yes. You set the rules — certain intents, hot leads or a keyphrase — and Vox warm-transfers the call live to the right team or person, carrying the context with it." } },
+      { q: { tr: "Bir aramayı insana aktarabilir mi?", en: "Can it transfer a call to a human?" }, a: { tr: "Evet. Kuralı sen koyarsın — belirli niyetler, sıcak adaylar veya bir anahtar ifade — Callypso aramayı canlı olarak doğru ekibe veya kişiye transfer eder, bağlamı da yanında taşır.", en: "Yes. You set the rules — certain intents, hot leads or a keyphrase — and Callypso warm-transfers the call live to the right team or person, carrying the context with it." } },
       { q: { tr: "Hangi diller destekleniyor?", en: "Which languages are supported?" }, a: { tr: "Türkçe ve İngilizce dahil 30+ dil. Ajan arayanın dilini ilk cümlelerden algılar ve aynı dilde devam eder.", en: "30+ languages including Turkish and English. The agent detects the caller's language from the first sentences and continues in it." } },
       { q: { tr: "CRM'ime veya araçlarıma bağlanır mı?", en: "Does it connect to my CRM or tools?" }, a: { tr: "Evet — her arama özet, transkript ve çıkarılan eylem maddeleriyle CRM'ine düşer. Webhook ve REST API ile HubSpot, Salesforce veya kendi sistemine bağla.", en: "Yes — every call lands in your CRM with a summary, transcript and extracted action items. Connect HubSpot, Salesforce or your own system via webhooks and a REST API." } },
       { q: { tr: "Teknoloji nedir?", en: "What's the stack?" }, a: { tr: "Next.js 16 (App Router), React 19, Tailwind v4. Telefon Twilio/Vapi üzerinden, konuşma bir LLM ile, randevular takvim API'siyle. Vendor kilidi yok.", en: "Next.js 16 (App Router), React 19, Tailwind v4. Telephony via Twilio/Vapi, conversation by an LLM, bookings via a calendar API. No vendor lock-in." } },
