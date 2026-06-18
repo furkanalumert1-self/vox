@@ -60,18 +60,7 @@ export function useLiveAgents() {
 }
 
 export function useLiveStats() {
-  const [stats, setStats] = useState<Stats>({ kpis, callVolume, outcomes, minutes, source: "demo" });
-
-  useEffect(() => {
-    fetch("/api/stats")
-      .then((r) => r.json())
-      .then((d) => {
-        if (d.source === "live") setStats(d);
-      })
-      .catch(() => {});
-  }, []);
-
-  return stats;
+  return { kpis, callVolume, outcomes, minutes, source: "demo" as const };
 }
 
 function mapApiCalls(data: Record<string, unknown>[]): CallRow[] {
