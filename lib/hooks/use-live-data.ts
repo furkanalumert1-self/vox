@@ -48,15 +48,46 @@ export function useLiveAgents() {
   }, []);
 
   async function saveAgent(id: string, updates: Partial<Agent>) {
+    const dbUpdates: Record<string, unknown> = {};
+    if ("active" in updates) dbUpdates.is_active = updates.active;
+    if ("voice" in updates) dbUpdates.voice = updates.voice;
+    if ("name" in updates) dbUpdates.name = updates.name;
+    if ("greeting" in updates) {
+      const g = updates.greeting;
+      dbUpdates.greeting = g && typeof g === "object" ? (g as { en: string }).en : String(g ?? "");
+    }
     await fetch("/api/agents", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id, ...updates }),
+      body: JSON.stringify({ id, ...dbUpdates }),
     });
     setAgents((prev) => prev.map((a) => (a.id === id ? { ...a, ...updates } : a)));
   }
 
-  return { agents, source, saveAgent };
+  async function createAgent(fields: { name: string; greeting: string; voice: string }) {
+    const res = await fetch("/api/agents", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(fields),
+    });
+    const d = await res.json();
+    if (d.agent) {
+      const a = d.agent;
+      setAgents((prev) => [...prev, {
+        id: String(a.id),
+        name: a.name,
+        voice: a.voice,
+        purpose: { tr: (a.greeting ?? "").slice(0, 60), en: (a.greeting ?? "").slice(0, 60) },
+        greeting: { tr: a.greeting ?? "", en: a.greeting ?? "" },
+        callsToday: 0,
+        active: a.is_active ?? true,
+        actions: [],
+      }]);
+    }
+    return d;
+  }
+
+  return { agents, source, saveAgent, createAgent };
 }
 
 export function useLiveStats() {
