@@ -84,6 +84,9 @@ export interface CallRow {
   summary: L;
   actions: L[];
   transcript: Turn[];
+  recordingUrl?: string;
+  agentName?: string;
+  waveform?: number[];
 }
 
 const wA = [0.4, 0.7, 0.5, 0.9, 0.6, 0.3, 0.8, 0.5, 0.7, 0.4, 0.6, 0.9, 0.5];
