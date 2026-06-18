@@ -63,6 +63,15 @@ export function useLiveStats() {
   return { kpis, callVolume, outcomes, minutes, source: "demo" as const };
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function mapTranscript(raw: unknown): any[] {
+  if (!Array.isArray(raw)) return [];
+  return (raw as Record<string, unknown>[]).map((turn) => ({
+    side: (turn.role === "agent" || turn.role === "assistant") ? "agent" : "caller",
+    text: { tr: String(turn.content ?? turn.text ?? ""), en: String(turn.content ?? turn.text ?? "") },
+  }));
+}
+
 function mapApiCalls(data: Record<string, unknown>[]): CallRow[] {
   return data.map((c) => ({
     id: String(c.id ?? ""),
@@ -74,7 +83,7 @@ function mapApiCalls(data: Record<string, unknown>[]): CallRow[] {
     duration: c.duration_s ? `${Math.floor(Number(c.duration_s) / 60)}m ${Number(c.duration_s) % 60}s` : "—",
     outcome: (c.outcome as CallRow["outcome"]) ?? "resolved",
     sentiment: (c.sentiment as CallRow["sentiment"]) ?? "neutral",
-    transcript: Array.isArray(c.transcript) ? (c.transcript as CallRow["transcript"]) : [],
+    transcript: mapTranscript(c.transcript),
     actions: [],
     waveform: Array.from({ length: 40 }, () => Math.random() * 0.8 + 0.1),
     wave: Array.from({ length: 40 }, () => Math.random() * 0.8 + 0.1),
