@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Icon } from "@/components/ui/icon";
 import { Waveform } from "@/components/app/waveform";
 import { AreaChart, Donut } from "@/components/app/charts";
@@ -434,8 +434,37 @@ function TranscriptDrawer({
   agentName: string;
 }) {
   const [scrub, setScrub] = useState(0);
+  const [playing, setPlaying] = useState(false);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
   const tint = OUTCOME_TINT[call.outcome];
-  const pct = (scrub / call.durationSec) * 100;
+  const pct = call.durationSec > 0 ? (scrub / call.durationSec) * 100 : 0;
+
+  useEffect(() => {
+    if (!call.recordingUrl) return;
+    const audio = new Audio(call.recordingUrl);
+    audioRef.current = audio;
+    const onTimeUpdate = () => setScrub(Math.floor(audio.currentTime));
+    const onEnded = () => { setPlaying(false); setScrub(0); };
+    audio.addEventListener("timeupdate", onTimeUpdate);
+    audio.addEventListener("ended", onEnded);
+    return () => {
+      audio.pause();
+      audio.removeEventListener("timeupdate", onTimeUpdate);
+      audio.removeEventListener("ended", onEnded);
+    };
+  }, [call.recordingUrl]);
+
+  function togglePlay() {
+    const audio = audioRef.current;
+    if (!audio) return;
+    if (playing) { audio.pause(); setPlaying(false); }
+    else { audio.play(); setPlaying(true); }
+  }
+
+  function handleScrub(val: number) {
+    setScrub(val);
+    if (audioRef.current) audioRef.current.currentTime = val;
+  }
 
   return (
     <div className="fixed inset-0 z-50 flex justify-end">
@@ -459,16 +488,23 @@ function TranscriptDrawer({
         {/* recording scrubber */}
         <div className="border-b border-border px-4 py-3">
           <div className="flex items-center gap-2.5">
-            <button className="grid h-8 w-8 place-items-center rounded-full" style={{ background: "var(--color-violet)", color: "var(--color-primary-foreground)" }}>
-              <Icon name="play" className="h-3.5 w-3.5" />
+            <button
+              onClick={togglePlay}
+              disabled={!call.recordingUrl}
+              title={!call.recordingUrl ? (lang === "tr" ? "Kayıt yok" : "No recording") : undefined}
+              className="grid h-8 w-8 place-items-center rounded-full disabled:opacity-40"
+              style={{ background: "var(--color-violet)", color: "var(--color-primary-foreground)" }}
+            >
+              <Icon name={playing ? "pause" : "play"} className="h-3.5 w-3.5" />
             </button>
             <input
               type="range"
               min={0}
-              max={call.durationSec}
+              max={call.durationSec || 1}
               value={scrub}
-              onChange={(e) => setScrub(Number(e.target.value))}
-              className="h-1 flex-1 cursor-pointer appearance-none rounded-full"
+              onChange={(e) => handleScrub(Number(e.target.value))}
+              disabled={!call.recordingUrl}
+              className="h-1 flex-1 cursor-pointer appearance-none rounded-full disabled:opacity-40"
               style={{ background: `linear-gradient(to right, ${tint} ${pct}%, var(--color-muted) ${pct}%)` }}
             />
             <span className="font-mono text-[11px] tabular-nums text-muted-foreground">{fmt(scrub)} / {call.duration}</span>
