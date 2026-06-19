@@ -1,18 +1,39 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Icon } from "@/components/ui/icon";
 import { Waveform } from "@/components/app/waveform";
 import { useLang } from "@/components/i18n/language-provider";
-import { VOICES, BUILDER_ACTIONS, type Agent } from "@/lib/demo/data";
+import { BUILDER_ACTIONS, type Agent } from "@/lib/demo/data";
 import { useLiveAgents } from "@/lib/hooks/use-live-data";
 import { cn } from "@/lib/utils";
+
+interface VapiVoice { id: string; name: string; description: string; provider: string; voiceId: string; }
+
+const FALLBACK_VOICES: VapiVoice[] = [
+  { id: "nova", name: "Nova", description: "warm female", provider: "11labs", voiceId: "21m00Tcm4TlvDq8ikWAM" },
+  { id: "atlas", name: "Atlas", description: "confident male", provider: "11labs", voiceId: "VR6AewLTigWG4xSOukaG" },
+  { id: "sage", name: "Sage", description: "calm neutral", provider: "11labs", voiceId: "AZnzlk1XvdvUeBnXmlld" },
+  { id: "echo", name: "Echo", description: "soft female", provider: "11labs", voiceId: "MF3mGyEYCl7XYWbV9V6O" },
+  { id: "ridge", name: "Ridge", description: "deep male", provider: "11labs", voiceId: "TxGEqnHWrfWFTfGW9XjX" },
+];
+
+function useVapiVoices() {
+  const [voices, setVoices] = useState<VapiVoice[]>(FALLBACK_VOICES);
+  useEffect(() => {
+    fetch("/api/vapi/voices").then(r => r.json()).then(d => {
+      if (d.voices?.length > 0) setVoices(d.voices);
+    }).catch(() => {});
+  }, []);
+  return voices;
+}
 
 export default function AgentsPage() {
   const { lang, t } = useLang();
   const { agents, saveAgent, createAgent } = useLiveAgents();
+  const voices = useVapiVoices();
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [voice, setVoice] = useState<string>(VOICES[0]);
+  const [selectedVoice, setSelectedVoice] = useState<VapiVoice>(FALLBACK_VOICES[0]);
   const [previewPlaying, setPreviewPlaying] = useState(false);
   const [saving, setSaving] = useState(false);
   const [showNew, setShowNew] = useState(false);
@@ -38,7 +59,7 @@ export default function AgentsPage() {
     if (!selected) return;
     setSaving(true);
     await saveAgent(selected.id, {
-      voice,
+      voice: `${selectedVoice.name} · ${selectedVoice.description}`,
       greeting: { tr: greetingRef.current?.value ?? "", en: greetingRef.current?.value ?? "" },
       active: selected.active,
     });
@@ -68,7 +89,7 @@ export default function AgentsPage() {
           {agents.map((a) => (
             <button
               key={a.id}
-              onClick={() => { setSelectedId(a.id); setVoice(a.voice); }}
+              onClick={() => { setSelectedId(a.id); const v = voices.find(v => a.voice.startsWith(v.name)); if (v) setSelectedVoice(v); }}
               className={cn(
                 "rounded-lg border bg-card/30 p-3 text-left transition-colors",
                 (selected?.id === a.id) ? "border-violet/50 shadow-soft" : "border-border hover:border-violet/30",
@@ -136,19 +157,19 @@ export default function AgentsPage() {
 
               <div>
                 <label className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">{L.voice}</label>
-                <div className="mt-1.5 space-y-1">
-                  {VOICES.map((v) => (
+                <div className="mt-1.5 space-y-1 max-h-48 overflow-y-auto pr-0.5">
+                  {voices.map((v) => (
                     <button
-                      key={v}
-                      onClick={() => setVoice(v)}
+                      key={v.id}
+                      onClick={() => setSelectedVoice(v)}
                       className={cn(
                         "flex w-full items-center gap-2 rounded-md border px-2.5 py-1.5 text-left font-mono text-[11px] transition-colors",
-                        voice === v ? "border-violet/50 bg-violet-soft text-violet" : "border-border text-muted-foreground hover:text-foreground",
+                        selectedVoice.id === v.id ? "border-violet/50 bg-violet-soft text-violet" : "border-border text-muted-foreground hover:text-foreground",
                       )}
                     >
                       <Icon name="audio-lines" className="h-3.5 w-3.5" />
-                      {v}
-                      {voice === v && <Icon name="check" className="ml-auto h-3.5 w-3.5" />}
+                      <span className="flex-1 truncate">{v.name}{v.description ? ` · ${v.description}` : ""}</span>
+                      {selectedVoice.id === v.id && <Icon name="check" className="h-3.5 w-3.5 shrink-0" />}
                     </button>
                   ))}
                 </div>
@@ -166,7 +187,7 @@ export default function AgentsPage() {
                   </button>
                   <Waveform data={[0.3, 0.7, 0.5, 0.9, 0.4, 0.8, 0.6, 0.3, 0.7, 0.5, 0.9, 0.4, 0.6, 0.8, 0.5]} animated playing={previewPlaying} width={220} height={26} className="flex-1" />
                 </div>
-                <p className="mt-1.5 font-mono text-[10px] text-muted-foreground">{L.preview} · {voice.split(" · ")[0]}</p>
+                <p className="mt-1.5 font-mono text-[10px] text-muted-foreground">{L.preview} · {selectedVoice.name}</p>
               </div>
 
               <div>
@@ -201,23 +222,25 @@ export default function AgentsPage() {
       </div>
 
       {/* New Agent Modal */}
-      {showNew && <NewAgentModal lang={lang} onClose={() => setShowNew(false)} onCreate={async (fields) => { await createAgent(fields); setShowNew(false); }} />}
+      {showNew && <NewAgentModal lang={lang} voices={voices} onClose={() => setShowNew(false)} onCreate={async (fields) => { await createAgent(fields); setShowNew(false); }} />}
     </div>
   );
 }
 
 function NewAgentModal({
   lang,
+  voices,
   onClose,
   onCreate,
 }: {
   lang: "tr" | "en";
+  voices: VapiVoice[];
   onClose: () => void;
-  onCreate: (fields: { name: string; greeting: string; voice: string }) => Promise<void>;
+  onCreate: (fields: { name: string; greeting: string; voice: string; voiceProvider: string; voiceId: string }) => Promise<void>;
 }) {
   const [name, setName] = useState("");
   const [greeting, setGreeting] = useState("");
-  const [voice, setVoice] = useState(VOICES[0]);
+  const [selectedVoice, setSelectedVoice] = useState<VapiVoice>(voices[0] ?? FALLBACK_VOICES[0]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -227,7 +250,13 @@ function NewAgentModal({
     setLoading(true);
     setError("");
     try {
-      await onCreate({ name: name.trim(), greeting: greeting.trim(), voice });
+      await onCreate({
+        name: name.trim(),
+        greeting: greeting.trim(),
+        voice: `${selectedVoice.name} · ${selectedVoice.description}`,
+        voiceProvider: selectedVoice.provider,
+        voiceId: selectedVoice.voiceId,
+      });
     } catch {
       setError(lang === "tr" ? "Ajan oluşturulamadı" : "Failed to create agent");
       setLoading(false);
@@ -269,19 +298,19 @@ function NewAgentModal({
 
           <div>
             <label className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">{lang === "tr" ? "Ses" : "Voice"}</label>
-            <div className="mt-1.5 space-y-1">
-              {VOICES.map((v) => (
+            <div className="mt-1.5 max-h-40 space-y-1 overflow-y-auto pr-0.5">
+              {voices.map((v) => (
                 <button
-                  key={v}
-                  onClick={() => setVoice(v)}
+                  key={v.id}
+                  onClick={() => setSelectedVoice(v)}
                   className={cn(
                     "flex w-full items-center gap-2 rounded-md border px-2.5 py-1.5 text-left font-mono text-[11px] transition-colors",
-                    voice === v ? "border-violet/50 bg-violet-soft text-violet" : "border-border text-muted-foreground hover:text-foreground",
+                    selectedVoice.id === v.id ? "border-violet/50 bg-violet-soft text-violet" : "border-border text-muted-foreground hover:text-foreground",
                   )}
                 >
                   <Icon name="audio-lines" className="h-3.5 w-3.5" />
-                  {v}
-                  {voice === v && <Icon name="check" className="ml-auto h-3.5 w-3.5" />}
+                  <span className="flex-1 truncate">{v.name}{v.description ? ` · ${v.description}` : ""}</span>
+                  {selectedVoice.id === v.id && <Icon name="check" className="h-3.5 w-3.5 shrink-0" />}
                 </button>
               ))}
             </div>

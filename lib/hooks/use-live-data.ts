@@ -64,7 +64,7 @@ export function useLiveAgents() {
     setAgents((prev) => prev.map((a) => (a.id === id ? { ...a, ...updates } : a)));
   }
 
-  async function createAgent(fields: { name: string; greeting: string; voice: string }) {
+  async function createAgent(fields: { name: string; greeting: string; voice: string; voiceProvider?: string; voiceId?: string }) {
     const res = await fetch("/api/agents", {
       method: "POST",
       headers: { "Content-Type": "application/json" },

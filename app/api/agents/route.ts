@@ -50,7 +50,10 @@ export async function POST(req: Request) {
 
   if (vapiKey) {
     try {
-      const voiceCfg = vapiVoice(body.voice || "nova");
+      // Use directly passed voiceProvider/voiceId if available (from real Vapi voices list)
+      const voiceCfg = (body.voiceProvider && body.voiceId)
+        ? { provider: body.voiceProvider as string, voiceId: body.voiceId as string }
+        : vapiVoice(body.voice || "nova");
       const res = await fetch("https://api.vapi.ai/assistant", {
         method: "POST",
         headers: {
