@@ -27,6 +27,20 @@ export async function GET() {
   }
 }
 
+// Map display voice names to 11labs voice IDs (matching existing Callypso Reception setup)
+const VOICE_MAP: Record<string, { provider: string; voiceId: string }> = {
+  "nova": { provider: "11labs", voiceId: "21m00Tcm4TlvDq8ikWAM" },
+  "atlas": { provider: "11labs", voiceId: "VR6AewLTigWG4xSOukaG" },
+  "sage": { provider: "11labs", voiceId: "AZnzlk1XvdvUeBnXmlld" },
+  "echo": { provider: "11labs", voiceId: "MF3mGyEYCl7XYWbV9V6O" },
+  "ridge": { provider: "11labs", voiceId: "TxGEqnHWrfWFTfGW9XjX" },
+};
+
+function vapiVoice(displayVoice: string) {
+  const key = displayVoice.split(" · ")[0].toLowerCase();
+  return VOICE_MAP[key] ?? VOICE_MAP["nova"];
+}
+
 export async function POST(req: Request) {
   const body = await req.json();
   const db = createServerClient();
@@ -36,6 +50,7 @@ export async function POST(req: Request) {
 
   if (vapiKey) {
     try {
+      const voiceCfg = vapiVoice(body.voice || "nova");
       const res = await fetch("https://api.vapi.ai/assistant", {
         method: "POST",
         headers: {
@@ -44,19 +59,24 @@ export async function POST(req: Request) {
         },
         body: JSON.stringify({
           name: body.name,
-          voice: { provider: "playht", voiceId: body.voice || "nova" },
+          voice: { provider: voiceCfg.provider, voiceId: voiceCfg.voiceId },
           firstMessage: body.greeting,
           model: {
             provider: "openai",
             model: "gpt-4o-mini",
-            messages: [{ role: "system", content: body.greeting }],
+            messages: [{ role: "system", content: `Sen ${body.name} adlı bir AI telefon asistanısın. Arayanları kibarca karşıla ve yardımcı ol.\n\n${body.greeting}` }],
           },
+          transcriber: { provider: "deepgram", model: "nova-2", language: "tr" },
         }),
       });
       const vapiData = await res.json();
-      vapiAssistantId = vapiData.id ?? null;
-    } catch {
-      // Vapi creation failed, continue without it
+      if (vapiData.id) {
+        vapiAssistantId = vapiData.id;
+      } else {
+        console.error("Vapi assistant creation failed:", JSON.stringify(vapiData));
+      }
+    } catch (e) {
+      console.error("Vapi fetch error:", e);
     }
   }
 
