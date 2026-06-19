@@ -30,13 +30,15 @@ function useVapiVoices() {
 
 export default function AgentsPage() {
   const { lang, t } = useLang();
-  const { agents, saveAgent, createAgent } = useLiveAgents();
+  const { agents, saveAgent, createAgent, deleteAgent } = useLiveAgents();
   const voices = useVapiVoices();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [selectedVoice, setSelectedVoice] = useState<VapiVoice>(FALLBACK_VOICES[0]);
   const [previewPlaying, setPreviewPlaying] = useState(false);
   const [saving, setSaving] = useState(false);
   const [showNew, setShowNew] = useState(false);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
   const greetingRef = useRef<HTMLTextAreaElement>(null);
 
   const selected = agents.find((a) => a.id === selectedId) ?? agents[0];
@@ -120,14 +122,22 @@ export default function AgentsPage() {
                   <span className="font-semibold text-foreground">{a.callsToday}</span>{" "}
                   <span className="text-muted-foreground">{L.callsToday}</span>
                 </span>
-                <span
-                  role="switch"
-                  aria-checked={a.active}
-                  onClick={(e) => { e.stopPropagation(); saveAgent(a.id, { active: !a.active }); }}
-                  className={cn("relative h-4 w-7 cursor-pointer rounded-full transition-colors", a.active ? "bg-violet/40" : "bg-muted")}
-                >
-                  <span className={cn("absolute top-0.5 h-3 w-3 rounded-full transition-all", a.active ? "left-[14px] bg-violet" : "left-0.5 bg-foreground/60")} />
-                </span>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setConfirmDeleteId(a.id); }}
+                    className="grid h-5 w-5 place-items-center rounded text-muted-foreground/50 transition-colors hover:bg-red-500/10 hover:text-red-400"
+                  >
+                    <Icon name="trash-2" className="h-3 w-3" />
+                  </button>
+                  <span
+                    role="switch"
+                    aria-checked={a.active}
+                    onClick={(e) => { e.stopPropagation(); saveAgent(a.id, { active: !a.active }); }}
+                    className={cn("relative h-4 w-7 cursor-pointer rounded-full transition-colors", a.active ? "bg-violet/40" : "bg-muted")}
+                  >
+                    <span className={cn("absolute top-0.5 h-3 w-3 rounded-full transition-all", a.active ? "left-[14px] bg-violet" : "left-0.5 bg-foreground/60")} />
+                  </span>
+                </div>
               </div>
             </button>
           ))}
@@ -223,6 +233,44 @@ export default function AgentsPage() {
 
       {/* New Agent Modal */}
       {showNew && <NewAgentModal lang={lang} voices={voices} onClose={() => setShowNew(false)} onCreate={async (fields) => { await createAgent(fields); setShowNew(false); }} />}
+
+      {/* Delete Confirm Modal */}
+      {confirmDeleteId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <button aria-label="Close" onClick={() => setConfirmDeleteId(null)} className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+          <div className="relative w-full max-w-sm rounded-xl border border-border bg-popover p-5 shadow-pop">
+            <h2 className="text-[15px] font-bold">{lang === "tr" ? "Ajanı sil?" : "Delete agent?"}</h2>
+            <p className="mt-1.5 text-[12.5px] text-muted-foreground">
+              {lang === "tr"
+                ? "Bu ajan Supabase'den ve Vapi'den kalıcı olarak silinecek. Bu işlem geri alınamaz."
+                : "This agent will be permanently deleted from Supabase and Vapi. This cannot be undone."}
+            </p>
+            <div className="mt-4 flex gap-2">
+              <button
+                onClick={() => setConfirmDeleteId(null)}
+                className="flex-1 rounded-md border border-border px-3 py-2 text-[13px] font-medium transition-colors hover:bg-muted"
+              >
+                {lang === "tr" ? "Vazgeç" : "Cancel"}
+              </button>
+              <button
+                disabled={deleting}
+                onClick={async () => {
+                  setDeleting(true);
+                  await deleteAgent(confirmDeleteId);
+                  if (selectedId === confirmDeleteId) setSelectedId(null);
+                  setConfirmDeleteId(null);
+                  setDeleting(false);
+                }}
+                className="flex flex-1 items-center justify-center gap-1.5 rounded-md px-3 py-2 text-[13px] font-semibold transition-opacity hover:opacity-90 disabled:opacity-50"
+                style={{ background: "var(--color-missed)", color: "#fff" }}
+              >
+                <Icon name={deleting ? "loader-circle" : "trash-2"} className={cn("h-3.5 w-3.5", deleting && "animate-spin")} />
+                {deleting ? (lang === "tr" ? "Siliniyor…" : "Deleting…") : (lang === "tr" ? "Evet, sil" : "Yes, delete")}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

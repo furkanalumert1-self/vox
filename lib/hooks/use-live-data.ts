@@ -87,7 +87,16 @@ export function useLiveAgents() {
     return d;
   }
 
-  return { agents, source, saveAgent, createAgent };
+  async function deleteAgent(id: string) {
+    await fetch("/api/agents", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id }),
+    });
+    setAgents((prev) => prev.filter((a) => a.id !== id));
+  }
+
+  return { agents, source, saveAgent, createAgent, deleteAgent };
 }
 
 export function useLiveStats() {

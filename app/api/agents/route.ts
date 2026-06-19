@@ -98,6 +98,36 @@ export async function POST(req: Request) {
   return NextResponse.json({ agent: data });
 }
 
+export async function DELETE(req: Request) {
+  const { id } = await req.json();
+  const db = createServerClient();
+
+  // Fetch vapi_assistant_id before deleting
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: agent } = await (db.from("agents") as any)
+    .select("vapi_assistant_id")
+    .eq("id", id)
+    .single();
+
+  // Delete from Vapi if we have the assistant ID
+  const vapiKey = process.env.VAPI_API_KEY;
+  if (vapiKey && agent?.vapi_assistant_id) {
+    try {
+      await fetch(`https://api.vapi.ai/assistant/${agent.vapi_assistant_id}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${vapiKey}` },
+      });
+    } catch (e) {
+      console.error("Vapi delete error:", e);
+    }
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error } = await (db.from("agents") as any).delete().eq("id", id);
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  return NextResponse.json({ ok: true });
+}
+
 export async function PATCH(req: Request) {
   const body = await req.json();
   const { id, ...updates } = body;
